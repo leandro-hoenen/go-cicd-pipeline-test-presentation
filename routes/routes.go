@@ -10,4 +10,5 @@ func SetRoutes(router *gin.Engine) {
 	router.GET("/random/sub", handlers.HandleRandomSub)
 	router.POST("/add", handlers.HandleAdd)
 	router.POST("/sub", handlers.HandleSub)
+	// comment to trigger CI Pipeline
 }
