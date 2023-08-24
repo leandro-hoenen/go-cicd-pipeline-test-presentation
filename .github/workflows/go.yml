@@ -1,0 +1,100 @@
+name: Go package
+
+on: [push]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Test
+        run: go test -v ./services
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Install dependencies
+        run: |
+          go get -u github.com/gin-gonic/gin
+
+      - name: Test
+        run: go test -v ./handlers
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Install dependencies
+        run: |
+          go get -u github.com/gin-gonic/gin
+
+      - name: Test
+        run: go test -bench . -benchtime=1000x github.com/leandro-hoenen/go-cicd-pipeline-test/services
+      
+  code-quality-analysis:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: false
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+
+  Go-Security:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [integration-tests, performance-tests, code-quality-analysis, Go-Security]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Install dependencies
+        run: |
+          go get -u github.com/gin-gonic/gin
+
+      - name: Build
+        run: go build -v ./...
+        
